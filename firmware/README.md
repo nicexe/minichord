@@ -32,9 +32,9 @@ Generation can then simply be done by running the `generate.py`script: `python3 
 
 ### USB descriptor customisation
 
-The device uses the stock `USB_MIDI16_SERIAL` USB type of the Teensy core, with two changes: it advertises 2 MIDI cables instead of 16, and it reports `minichord` as manufacturer and product name.
+The device uses the stock `USB_MIDI16_AUDIO_SERIAL` USB type of the Teensy core, with two changes: it advertises 2 MIDI cables instead of 16, and it reports `minichord` as manufacturer and product name.
 
-`USB_MIDI16_SERIAL` gives MIDI plus a USB serial port, but no USB Audio interfaces. The audio interfaces of the previously used `USB_MIDI16_AUDIO_SERIAL` type prevent the device from transmitting MIDI to full-speed-only USB hosts (many microcontroller USB host shields); high-speed hosts such as desktop PCs and iOS devices are unaffected. Since the minichord never used USB audio for anything but an optional recording tap, the interfaces are dropped. The tap in `include/audio_definition.h` is guarded by `#ifdef AUDIO_INTERFACE`, so switching the USB type back in `platformio.ini` restores it without further edits.
+The USB audio recording tap in `include/audio_definition.h` is guarded by `#ifdef AUDIO_INTERFACE`, so building against a USB type without audio interfaces still works without further edits.
 
 Both are done from within the project, so no file of the `framework-arduinoteensy` package has to be touched:
 
