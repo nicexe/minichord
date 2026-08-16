@@ -289,7 +289,8 @@ uint midi_buffer_delay=300; //in microseconds, helps compatibility with some har
 // usbMIDI is not reentrant; calling it from both loop() and a PIT ISR corrupts its
 // transmit state. Rule: only drain_midi_queue(), called at the end of loop(), touches
 // usbMIDI. Everything else enqueues via queue_midi(), safe from ISR context.
-#define MIDI_QUEUE_SIZE 128 // must be a power of two
+#define MIDI_QUEUE_SIZE 256 // power of two, max 256 for uint8_t indices
+#define MIDI_DRAIN_MAX_PER_LOOP 16 // caps how long a drain can hold up loop()
 struct midi_event_t {
   uint8_t note;
   uint8_t velocity;
@@ -325,7 +326,10 @@ void queue_midi(bool note_on, uint8_t note, uint8_t velocity, uint8_t channel, u
 // Called from loop() only. The single point at which this firmware talks to usbMIDI.
 void drain_midi_queue() {
   bool sent = false;
-  while (midi_queue_tail != midi_queue_head) {
+  uint8_t budget = MIDI_DRAIN_MAX_PER_LOOP;
+
+  while (midi_queue_tail != midi_queue_head && budget > 0) {
+    budget--;
     midi_event_t e;
     e.note = midi_queue[midi_queue_tail].note;
     e.velocity = midi_queue[midi_queue_tail].velocity;
