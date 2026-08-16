@@ -1077,10 +1077,12 @@ void stop_chord_notes() {
       chord_vibrato_dc_envelope_array[i]->noteOff();
       chord_envelope_array[i]->noteOff();
       chord_envelope_filter_array[i]->noteOff();
-      if (chord_started_notes[i] != 0) {
-        queue_midi(false, chord_started_notes[i], chord_release_velocity, chord_channel, chord_port);
-        chord_started_notes[i] = 0;
-      }
+    }
+    // Sent regardless of the internal envelope: an external synth holds the note
+    // until it receives the Note Off.
+    if (chord_started_notes[i] != 0) {
+      queue_midi(false, chord_started_notes[i], chord_release_velocity, chord_channel, chord_port);
+      chord_started_notes[i] = 0;
     }
   }
   AudioInterrupts();
@@ -1088,11 +1090,14 @@ void stop_chord_notes() {
 
 void handle_rhythm_mode() {
   for (int i = 0; i < 4; i++) {
-    if (note_off_timing[i] > note_pushed_duration && chord_envelope_array[i]->isSustain()) {
-      chord_vibrato_envelope_array[i]->noteOff();
-      chord_vibrato_dc_envelope_array[i]->noteOff();
-      chord_envelope_array[i]->noteOff();
-      chord_envelope_filter_array[i]->noteOff();
+    if (note_off_timing[i] > note_pushed_duration) {
+      if (chord_envelope_array[i]->isSustain()) {
+        chord_vibrato_envelope_array[i]->noteOff();
+        chord_vibrato_dc_envelope_array[i]->noteOff();
+        chord_envelope_array[i]->noteOff();
+        chord_envelope_filter_array[i]->noteOff();
+      }
+      // See stop_chord_notes().
       if (chord_started_notes[i] != 0) {
         queue_midi(false, chord_started_notes[i], chord_release_velocity, chord_channel, chord_port);
         chord_started_notes[i] = 0;
